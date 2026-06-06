@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUCKY CASE</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #FFD700; --gold2: #FF8C00;
+  --dark: #08080f; --card: #0f0f1a; --card2: #13131e; --border: #1e1e2e;
+  --text: #e0e0ff; --muted: #44445a;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--dark); font-family:'Rajdhani',sans-serif; color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+.bg-glow {
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 50% 60% at 15% 15%, rgba(255,80,80,.06) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 50% at 85% 85%, rgba(80,60,255,.06) 0%, transparent 55%);
+}
+#starfield { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+/* ── HEADER ── */
+header {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  padding:14px 24px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,8,15,.92); backdrop-filter:blur(16px);
+}
+.logo {
+  font-family:'Bebas Neue',sans-serif; font-size:1.7rem; letter-spacing:5px; cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),var(--gold2),var(--gold));
+  background-size:200%; -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  animation:shimmer 3s linear infinite;
+}
+@keyframes shimmer { to { background-position:200% center; } }
+.bal-pill {
+  display:flex; align-items:center; gap:8px;
+  background:var(--card2); border:1px solid var(--border);
+  padding:7px 18px; border-radius:100px; font-weight:700; font-size:.95rem;
+}
+
+/* ── PAGES ── */
+.page { display:none; padding-top:70px; min-height:100vh; padding-bottom:100px; }
+.page.active { display:block; }
+
+/* ══════════════════════════════════════════
+   ГЛАВНОЕ МЕНЮ
+══════════════════════════════════════════ */
+.home-hero {
+  position:relative; z-index:5;
+  display:flex; flex-direction:column; align-items:center;
+  padding:44px 20px 30px; text-align:center;
+}
+.tagline { font-size:.72rem; letter-spacing:5px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
+.hero-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2.6rem,10vw,5.5rem); line-height:.95; letter-spacing:4px; margin-bottom:36px; }
+.hero-title .t1 { color:var(--text); }
+.hero-title .t2 { background:linear-gradient(135deg,#FF4444,var(--gold),#8855ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+/* Stats bar */
+.stats-bar {
+  position:relative; z-index:5;
+  display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:0 20px 36px;
+}
+.stat { background:var(--card2); border:1px solid var(--border); border-radius:16px; padding:16px 22px; text-align:center; min-width:100px; }
+.stat-val { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; color:var(--gold); letter-spacing:2px; line-height:1; }
+.stat-key { font-size:.62rem; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+
+/* Section headers */
+.sec-head {
+  position:relative; z-index:5;
+  padding:0 20px 16px; display:flex; align-items:center; gap:14px;
+  max-width:700px; margin:0 auto;
+}
+.sec-head h2 { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:4px; color:var(--muted); }
+.sec-head .line { flex:1; height:1px; background:var(--border); }
+
+/* CASES grid */
+.cases-grid {
+  position:relative; z-index:5;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+  gap:14px; padding:0 20px 40px; max-width:700px; margin:0 auto;
+}
+.case-tile {
+  background:var(--card2); border:1.5px solid var(--border); border-radius:20px;
+  padding:24px 14px 18px; text-align:center; cursor:pointer;
+  transition:transform .2s, border-color .3s, box-shadow .3s; position:relative; overflow:hidden;
+}
+.case-tile::before {
+  content:''; position:absolute; inset:0; border-radius:20px;
+  background:radial-gradient(ellipse at 50% 0%, rgba(255,215,0,.08), transparent 65%);
+}
+.case-tile:hover { transform:translateY(-5px); border-color:rgba(255,215,0,.4); box-shadow:0 16px 40px rgba(255,215,0,.1); }
+.case-tile:active { transform:scale(.97); }
+.case-tile.locked { opacity:.45; cursor:not-allowed; }
+.case-tile.locked:hover { transform:none; border-color:var(--border); box-shadow:none; }
+.tile-icon { font-size:2.8rem; margin-bottom:8px; display:block; animation:float 3.5s ease-in-out infinite; }
+.tile-icon2 { animation-delay:.6s; }
+.tile-icon3 { animation-delay:1.2s; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+.tile-name { font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; color:var(--gold); display:block; margin-bottom:4px; }
+.tile-sub  { font-size:.65rem; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+.tile-badge {
+  position:absolute; top:10px; right:10px;
+  font-family:'Bebas Neue',sans-serif; font-size:.65rem; letter-spacing:1px;
+  padding:3px 8px; border-radius:100px;
+}
+.badge-free   { background:rgba(46,204,113,.15); border:1px solid rgba(46,204,113,.3); color:#2ecc71; }
+.badge-soon   { background:rgba(100,100,150,.15); border:1px solid rgba(100,100,150,.3); color:var(--muted); }
+.badge-new    { background:rgba(255,80,80,.15); border:1px solid rgba(255,80,80,.3); color:#ff5050; }
+
+/* GAMES grid */
+.games-grid {
+  position:relative; z-index:5;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr));
+  gap:14px; padding:0 20px 60px; max-width:700px; margin:0 auto;
+}
+.game-tile {
+  background:var(--card2); border:1.5px solid var(--border); border-radius:20px;
+  padding:28px 14px 20px; text-align:center; cursor:pointer; position:relative; overflow:hidden;
+  transition:transform .2s, border-color .3s, box-shadow .3s;
+}
+.game-tile:hover { transform:translateY(-5px); border-color:rgba(136,85,255,.4); box-shadow:0 16px 40px rgba(136,85,255,.1); }
+.game-tile:active { transform:scale(.97); }
+.game-tile.locked { opacity:.45; cursor:not-allowed; }
+.game-tile.locked:hover { transform:none; border-color:var(--border); box-shadow:none; }
+.game-icon { font-size:2.6rem; margin-bottom:8px; display:block; }
+.game-name { font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; color:#aa88ff; display:block; margin-bottom:4px; }
+.game-sub  { font-size:.62rem; letter-spacing:1px; color:var(--muted); text-transform:uppercase; }
+
+/* ══════════════════════════════════════════
+   СТРАНИЦА КЕЙСА
+══════════════════════════════════════════ */
+.case-page {
+  position:relative; z-index:5;
+  display:flex; flex-direction:column; align-items:center;
+  padding:36px 20px 40px; text-align:center;
+}
+.back-btn {
+  position:absolute; top:80px; left:20px; z-index:10;
+  display:flex; align-items:center; gap:6px;
+  background:var(--card2); border:1px solid var(--border);
+  padding:8px 16px; border-radius:100px; cursor:pointer;
+  font-weight:700; font-size:.85rem; color:var(--muted);
+  transition:color .2s, border-color .2s;
+}
+.back-btn:hover { color:var(--text); border-color:rgba(255,255,255,.2); }
+
+.cp-tag  { font-size:.7rem; letter-spacing:4px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
+.cp-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,8vw,4.5rem); letter-spacing:4px; margin-bottom:36px; }
+.cp-title span { background:linear-gradient(135deg,#FF4444,var(--gold),#8855ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+.case-card {
+  position:relative; width:200px; height:200px; border-radius:28px;
+  background:linear-gradient(145deg,#141424,#0e0e1e);
+  border:1.5px solid rgba(255,215,0,.2); cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  transition:transform .2s, border-color .3s, box-shadow .3s; overflow:hidden; margin-bottom:28px;
+}
+.case-card::before {
+  content:''; position:absolute; inset:0; border-radius:28px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,.1),transparent 65%);
+}
+.case-card:hover { transform:translateY(-6px) scale(1.04); border-color:rgba(255,215,0,.55); box-shadow:0 20px 60px rgba(255,215,0,.15); }
+.case-card:active { transform:scale(.97); }
+.case-icon { font-size:4rem; filter:drop-shadow(0 0 18px rgba(255,215,0,.5)); animation:float 3.5s ease-in-out infinite; }
+.case-name { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:3px; color:var(--gold); }
+.case-sub  { font-size:.62rem; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+
+.btn-open {
+  position:relative; overflow:hidden; padding:16px 56px;
+  font-family:'Bebas Neue',sans-serif; font-size:1.45rem; letter-spacing:5px;
+  color:#000; border:none; border-radius:100px; cursor:pointer;
+  background:linear-gradient(135deg,#FFD700,#FF8C00,#FFD700); background-size:200%;
+  box-shadow:0 4px 30px rgba(255,180,0,.35); animation:shimmer 3s linear infinite;
+  transition:transform .2s, box-shadow .2s; margin-bottom:40px;
+}
+.btn-open::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,.28) 50%,transparent 60%);
+  transform:translateX(-100%); transition:transform .5s;
+}
+.btn-open:hover::after { transform:translateX(100%); }
+.btn-open:hover { transform:translateY(-3px); box-shadow:0 10px 40px rgba(255,180,0,.5); }
+.btn-open:active { transform:scale(.97); }
+
+/* History on case page */
+.hist-wrap { width:100%; max-width:540px; }
+.hist-title { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; letter-spacing:4px; color:var(--muted); margin-bottom:14px; }
+.hist-list { display:flex; flex-direction:column; gap:8px; }
+.hist-item {
+  display:flex; align-items:center; gap:12px;
+  background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:11px 16px;
+  animation:slideIn .35s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateX(-14px)} to{opacity:1;transform:none} }
+.hist-dot    { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0; }
+.hist-info   { flex:1; }
+.hist-name   { font-weight:700; font-size:.9rem; }
+.hist-rarity { font-size:.62rem; color:var(--muted); }
+.hist-reward { color:var(--gold); font-weight:700; font-size:.95rem; }
+.hist-time   { color:var(--muted); font-size:.68rem; }
+
+/* ── ФИКСИРОВАННЫЙ БЛОК РЕКЛАМЫ ВНИЗУ ── */
+.ads-footer-bar {
+  position:fixed; bottom:0; left:0; right:0; z-index:90;
+  background:rgba(15,15,26,0.95); backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  padding:12px 20px; display:flex; justify-content:center; align-items:center;
+}
+.btn-ad {
+  width:100%; max-width:400px; padding:12px 24px;
+  font-family:'Bebas Neue',sans-serif; font-size:1.15rem; letter-spacing:3px;
+  color:#fff; background:linear-gradient(135deg, #8855ff, #aa88ff);
+  border:none; border-radius:12px; cursor:pointer;
+  transition:transform .2s, box-shadow .2s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:0 4px 20px rgba(136,85,255,0.25);
+}
+.btn-ad:hover { transform:translateY(-2px); box-shadow:0 6px 25px rgba(136,85,255,0.45); }
+.btn-ad:active { transform:scale(0.98); }
+.btn-ad.loading { opacity:0.6; cursor:not-allowed; transform:none; }
+
+/* ── MODAL ── */
+.overlay {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.overlay.show { opacity:1; pointer-events:all; }
+.modal {
+  position:relative; overflow:hidden;
+  background:var(--card); border:1px solid var(--border); border-radius:26px;
+  padding:36px 28px; text-align:center; max-width:460px; width:93%;
+  transform:scale(.82) translateY(20px); transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.overlay.show .modal { transform:scale(1) translateY(0); }
+
+.reel-label { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:5px; color:var(--muted); margin-bottom:16px; }
+.reel-wrap {
+  position:relative; width:100%; height:88px;
+  overflow:hidden; border-radius:14px; border:1.5px solid var(--border); margin-bottom:24px;
+}
+.reel-fade-l,.reel-fade-r { position:absolute;top:0;bottom:0;width:64px;z-index:2;pointer-events:none; }
+.reel-fade-l { left:0; background:linear-gradient(to right,var(--card),transparent); }
+.reel-fade-r { right:0; background:linear-gradient(to left,var(--card),transparent); }
+.reel-ptr {
+  position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);
+  width:2.5px;background:var(--gold);z-index:3;box-shadow:0 0 10px var(--gold);pointer-events:none;
+}
+.reel-ptr::before {
+  content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+  border:7px solid transparent;border-top:0;border-bottom:12px solid var(--gold);
+}
+.reel-ptr::after {
+  content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);
+  border:7px solid transparent;border-bottom:0;border-top:12px solid var(--gold);
+}
+.reel-track { display:flex;align-items:center;height:100%;gap:8px;padding:0 6px;will-change:transform; }
+.reel-item {
+  min-width:72px;height:72px;border-radius:10px;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:1.6rem;font-weight:700;border:1.5px solid rgba(255,255,255,.07);
+}
+.reel-item .rl { font-size:.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:900;margin-top:3px; }
+
+.res { display:none; }
+.res.show { display:block; }
+.reel-scr.gone { display:none; }
+.res-blob {
+  width:120px;height:120px;border-radius:50%;margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;font-size:2.8rem;
+  animation:pop .5s cubic-bezier(.34,1.56,.64,1);position:relative;
+}
+@keyframes pop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+.res-blob::after { content:'';position:absolute;inset:-10px;border-radius:50%;background:inherit;opacity:.15;animation:ring 1.2s ease-out infinite; }
+@keyframes ring { to{transform:scale(1.6);opacity:0} }
+.res-badge { display:inline-block;padding:3px 14px;border-radius:100px;margin-bottom:8px;font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:3px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted); }
+.res-title { font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:4px;margin-bottom:5px; }
+.res-name  { font-size:1.15rem;font-weight:700;margin-bottom:5px; }
+.res-stars { font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:var(--gold);letter-spacing:3px;margin-bottom:24px; }
+.btn-take { padding:12px 46px;font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:4px;background:transparent;border:2px solid var(--gold);color:var(--gold);border-radius:100px;cursor:pointer;transition:all .2s; }
+.btn-take:hover { background:var(--gold);color:#000; }
+.conf-c { position:absolute;inset:0;pointer-events:none; }
+</style>
+<!-- Подключаем скрипт Adsgram -->
+<script src="https://sad.adsgram.ai/js/adsgram-adbox.js"></script>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<canvas id="starfield"></canvas>
+
+<header>
+  <div class="logo" onclick="goHome()">🎰 LuckyCase</div>
+  <div class="bal-pill">⭐ <span id="balNum">0</span> звёзд</div>
+</header>
+
+<!-- ══ ГЛАВНОЕ МЕНЮ ══ -->
+<div class="page active" id="pageHome">
+  <div class="home-hero">
+    <p class="tagline">Бесплатные награды • Каждый день</p>
+    <h1 class="hero-title"><span class="t1">LUCKY</span><br><span class="t2">CASE</span></h1>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val" id="sOpened">0</div><div class="stat-key">Открыто</div></div>
+    <div class="stat"><div class="stat-val" id="sTotal">0</div><div class="stat-key">Всего ⭐</div></div>
+    <div class="stat"><div class="stat-val" id="sBest">—</div><div class="stat-key">Лучший</div></div>
+  </div>
+
+  <!-- КЕЙСЫ -->
+  <div class="sec-head"><div class="line"></div><h2>🎁 КЕЙСЫ</h2><div class="line"></div></div>
+  <div class="cases-grid">
+    <div class="case-tile" onclick="goCase()">
+      <span class="tile-badge badge-free">БЕСПЛАТНО</span>
+      <span class="tile-icon">🎁</span>
+      <span class="tile-name">Ежедневный</span>
+      <span class="tile-sub">1–2 ⭐</span>
+    </div>
+    <div class="case-tile locked">
+      <span class="tile-badge badge-soon">СКОРО</span>
+      <span class="tile-icon tile-icon2">💎</span>
+      <span class="tile-name">Премиум</span>
+      <span class="tile-sub">10–50 ⭐</span>
+    </div>
+    <div class="case-tile locked">
+      <span class="tile-badge badge-soon">СКОРО</span>
+      <span class="tile-icon tile-icon3">👑</span>
+      <span class="tile-name">Легендарный</span>
+      <span class="tile-sub">50–200 ⭐</span>
+    </div>
+    <div class="case-tile locked">
+      <span class="tile-badge badge-soon">СКОРО</span>
+      <span class="tile-icon">🌈</span>
+      <span class="tile-name">Мифический</span>
+      <span class="tile-sub">100–500 ⭐</span>
+    </div>
+  </div>
+
+  <!-- ИГРЫ -->
+  <div class="sec-head"><div class="line"></div><h2>🎮 ИГРЫ</h2><div class="line"></div></div>
+  <div class="games-grid">
+    <div class="game-tile locked">
+      <span class="tile-badge badge-soon">СКОРО</span>
+      <span class="game-icon">🎰</span>
+      <span class="game-name">Слоты</span>
+      <span class="game-sub">Крути барабан</span>
+    </div>
+    <div class="game-tile locked">
+      <span class="tile-badge badge-soon">СКОРО</span>
+      <span class="game-icon">🃏</span>
+      <span class="game-name">Карты</span>
+      <span class="game-sub">Больше / меньше</span>
+    </div>
+    <div class="game-tile locked">
+      <span class="tile-badge badge-soon">СКОРО</span>
+      <span class="game-icon">🎯</span>
+      <span class="game-name">Рулетка</span>
+      <span class="game-sub">Угадай цвет</span>
+    </div>
+    <div class="game-tile locked">
+      <span class="tile-badge badge-soon">СКОРО</span>
+      <span class="game-icon">💣</span>
+      <span class="game-name">Мины</span>
+      <span class="game-sub">Найди клад</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ СТРАНИЦА КЕЙСА ══ -->
+<div class="page" id="pageCase">
+  <div class="back-btn" onclick="goHome()">← Назад</div>
+  <div class="case-page">
+    <p class="cp-tag">Ежедневный кейс</p>
+    <h1 class="cp-title"><span>Открой кейс</span></h1>
+
+    <div class="case-card" onclick="openCase()">
+      <div class="case-icon">🎁</div>
+      <div class="case-name">Ежедневный кейс</div>
+      <div class="case-sub">Бесплатно!</div>
+    </div>
+
+    <button class="btn-open" onclick="openCase()">✨ ОТКРЫТЬ КЕЙС</button>
+
+    <div class="hist-wrap">
+      <div class="hist-title">История</div>
+      <div class="hist-list" id="histList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Фиксированная кнопка просмотра рекламы внизу -->
+<div class="ads-footer-bar">
+  <button class="btn-ad" id="btnShowAd" onclick="showRewardAd()">
+    📺 СМОТРЕТЬ РЕКЛАМУ (+0.5 ⭐)
+  </button>
+</div>
+
+<!-- ══ MODAL ══ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <canvas class="conf-c" id="confC"></canvas>
+    <div class="reel-scr" id="reelScr">
+      <div class="reel-label">ОТКРЫВАЕМ...</div>
+      <div class="reel-wrap">
+        <div class="reel-fade-l"></div>
+        <div class="reel-fade-r"></div>
+        <div class="reel-ptr"></div>
+        <div class="reel-track" id="reelTrack"></div>
+      </div>
+    </div>
+    <div class="res" id="resScr">
+      <div class="res-blob"  id="resBlob"></div>
+      <div class="res-badge" id="resBadge"></div>
+      <div class="res-title" id="resTitle"></div>
+      <div class="res-name"  id="resName"></div>
+      <div class="res-stars" id="resStars"></div>
+      <button class="btn-take" onclick="closeModal()">Забрать!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── НАВИГАЦИЯ ─────────────────────────────────────────────
+function goHome() {
+  document.getElementById('pageHome').classList.add('active');
+  document.getElementById('pageCase').classList.remove('active');
+}
+function goCase() {
+  document.getElementById('pageHome').classList.remove('active');
+  document.getElementById('pageCase').classList.add('active');
+}
+
+// ── ДАННЫЕ ────────────────────────────────────────────────
+const PRIZES = [
+  { name:'Синяя волна', emoji:'🔵', color:'#3a7bd5', stars:1, rarity:'Обычный' },
+  { name:'Алый огонь',  emoji:'🔴', color:'#c0392b', stars:1, rarity:'Обычный' },
+  { name:'Изумруд',     emoji:'🟢', color:'#27ae60', stars:1, rarity:'Обычный' },
+  { name:'Лавандовый',  emoji:'🟣', color:'#8e44ad', stars:1, rarity:'Обычный' },
+  { name:'Сапфир',      emoji:'💙', color:'#2980b9', stars:1, rarity:'Обычный' },
+  { name:'Фиолет',      emoji:'🟣', color:'#6c3483', stars:2, rarity:'Редкий'  },
+  { name:'Золото',      emoji:'🟡', color:'#d4ac0d', stars:2, rarity:'Редкий'  },
+  { name:'Рубин',       emoji:'❤️', color:'#922b21', stars:2, rarity:'Редкий'  },
+];
+const WEIGHTS = [15,14,14,14,13,10,10,10];
+
+const FAKES = [
+  { emoji:'💎', color:'#00bfff', stars:50  },
+  { emoji:'👑', color:'#FFD700', stars:100 },
+  { emoji:'🔥', color:'#ff4500', stars:75  },
+  { emoji:'🌈', color:'#9b59b6', stars:200 },
+  { emoji:'💰', color:'#2ecc71', stars:50  },
+  { emoji:'🚀', color:'#e67e22', stars:99  },
+  { emoji:'💫', color:'#3498db', stars:88  },
+  { emoji:'🏆', color:'#f39c12', stars:500 },
+];
+
+// ── STATE ─────────────────────────────────────────────────
+let st = JSON.parse(localStorage.getItem('lc5') || '{}');
+st.balance = st.balance || 0;
+st.opened  = st.opened  || 0;
+st.total   = st.total   || 0;
+st.best    = st.best    || null;
+st.hist    = st.hist    || [];
+function save() { localStorage.setItem('lc5', JSON.stringify(st)); }
+
+// Округляем до 1 знака для красивого вывода дробных звезд
+function formatStars(val) {
+  return Number(val.toFixed(1));
+}
+
+function renderUI() {
+  document.getElementById('balNum').textContent  = formatStars(st.balance);
+  document.getElementById('sOpened').textContent = st.opened;
+  document.getElementById('sTotal').textContent  = formatStars(st.total);
+  document.getElementById('sBest').textContent   = st.best ? st.best.stars+'⭐' : '—';
+  const list = document.getElementById('histList');
+  list.innerHTML = '';
+  st.hist.slice(-10).reverse().forEach(h => {
+    const d = document.createElement('div');
+    d.className = 'hist-item';
+    d.innerHTML = `
+      <div class="hist-dot" style="background:${h.color}">${h.emoji}</div>
+      <div class="hist-info">
+        <div class="hist-name">${h.name}</div>
+        <div class="hist-rarity">${h.rarity}</div>
+      </div>
+      <div class="hist-reward">+${h.stars}⭐</div>
+      <div class="hist-time">${h.time}</div>`;
+    list.appendChild(d);
+  });
+}
+
+// ── ИНТЕГРАЦИЯ ADSGRAM ─────────────────────────────────────
+// Замените YOUR_BLOCK_ID на ваш реальный Block ID из личного кабинета Adsgram
+const ADSGRAM_BLOCK_ID = "YOUR_BLOCK_ID"; 
+const AdController = window.Adsgram ? window.Adsgram.createAdController(ADSGRAM_BLOCK_ID) : null;
+
+function showRewardAd() {
+  const btn = document.getElementById('btnShowAd');
+  
+  if (!window.Adsgram) {
+    alert("Ошибка: Рекламный блок Adsgram не загрузился или вы открыли приложение не внутри Telegram.");
+    return;
+  }
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  btn.textContent = "⏳ ЗАГРУЗКА РЕКЛАМЫ...";
+
+  AdController.show().then((result) => {
+    // Пользователь посмотрел видео до конца
+    st.balance += 0.5;
+    st.total += 0.5;
+    save();
+    renderUI();
+    
+    // Эффект конфетти в честь получения награды
+    confetti('#8855ff');
+    alert("🎉 Спасибо за просмотр! Вам начислено +0.5 ⭐");
+  }).catch((result) => {
+    // Реклама не показалась или была пропущена
+    if (result && result.error) {
+      alert("Не удалось загрузить рекламу. Попробуйте чуть позже.");
+    } else {
+      alert("Вы прервали просмотр. Награда не начислена.");
+    }
+  }).finally(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    btn.textContent = "📺 СМОТРЕТЬ РЕКЛАМУ (+0.5 ⭐)";
+  });
+}
+
+function roll() {
+  const sum = WEIGHTS.reduce((a,b)=>a+b,0);
+  let r = Math.random()*sum;
+  for (let i=0;i<WEIGHTS.length;i++) { r-=WEIGHTS[i]; if(r<=0) return i; }
+  return 0;
+}
+
+// ── БАРАБАН ───────────────────────────────────────────────
+const IW   = 80;
+const WPOS = 38;
+
+function buildReel(winIdx) {
+  const track = document.getElementById('reelTrack');
+  track.innerHTML = '';
+  track.style.transform = 'translateX(0)';
+  for (let i = 0; i < 55; i++) {
+    let p, isLight = false;
+    if (i === WPOS) {
+      p = PRIZES[winIdx];
+    } else {
+      if (Math.random() < 0.65) {
+        p = FAKES[Math.floor(Math.random()*FAKES.length)];
+      } else {
+        p = PRIZES[Math.floor(Math.random()*PRIZES.length)];
+      }
+    }
+    isLight = p.color === '#FFD700' || p.color === '#2ecc71' || p.color === '#f39c12' || p.color === '#d4ac0d';
+    const el = document.createElement('div');
+    el.className = 'reel-item';
+    el.style.background = p.color;
+    el.innerHTML = `<span>${p.emoji}</span><span class="rl" style="color:${isLight?'#111':'rgba(255,255,255,.8)'}">${p.stars}⭐</span>`;
+    track.appendChild(el);
+  }
+}
+
+function spin(winIdx, done) {
+  buildReel(winIdx);
+  const track = document.getElementById('reelTrack');
+  const wrap  = track.parentElement;
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const mid  = wrap.clientWidth / 2;
+    const winX = -(8 + WPOS*IW + IW/2 - mid);
+    const startX = winX + IW*40;
+
+    const D1=2000, D2=3000, D3=2000, TOTAL=7000;
+    const totalDist = Math.abs(startX - winX);
+    const v = totalDist / (0.5*D1 + D2 + 0.5*D3);
+    const distAccel  = 0.5*v*D1;
+    const distCruise = v*D2;
+    const x1 = startX - distAccel;
+    const x2 = x1 - distCruise;
+
+    const easeIn  = t => t*t;
+    const easeOut = t => 1-(1-t)*(1-t);
+
+    let t0 = null;
+    function frame(now) {
+      if (!t0) t0 = now;
+      const e = now - t0;
+      let x;
+      if (e < D1) {
+        x = startX + (x1-startX) * easeIn(e/D1);
+      } else if (e < D1+D2) {
+        x = x1 + (x2-x1) * ((e-D1)/D2);
+      } else if (e < TOTAL) {
+        x = x2 + (winX-x2) * easeOut((e-D1-D2)/D3);
+      } else {
+        x = winX;
+      }
+      track.style.transform = `translateX(${x}px)`;
+      if (e < TOTAL) {
+        requestAnimationFrame(frame);
+      } else {
+        track.style.transform = `translateX(${winX}px)`;
+        track.querySelectorAll('.reel-item')[WPOS].style.outline = '2.5px solid gold';
+        track.querySelectorAll('.reel-item')[WPOS].style.boxShadow = '0 0 18px gold';
+        setTimeout(done, 600);
+      }
+    }
+    requestAnimationFrame(frame);
+  }));
+}
+
+// ── КОНФЕТТИ ─────────────────────────────────────────────
+function confetti(color) {
+  const c = document.getElementById('confC');
+  const x = c.getContext('2d');
+  c.width=c.offsetWidth; c.height=c.offsetHeight;
+  const P = Array.from({length:60},()=>({
+    px:Math.random()*c.width, py:-10,
+    w:Math.random()*8+3, h:Math.random()*4+2,
+    col:[color,'#FFD700','#fff','#ff6b35','#55aaff'][~~(Math.random()*5)],
+    vx:(Math.random()-.5)*4, vy:Math.random()*3+1.5,
+    r:Math.random()*Math.PI*2, vr:(Math.random()-.5)*.15,
+  }));
+  let f;
+  (function draw(){
+    x.clearRect(0,0,c.width,c.height); let alive=false;
+    P.forEach(p=>{ p.px+=p.vx; p.py+=p.vy; p.r+=p.vr;
+      if(p.py<c.height+20) alive=true;
+      x.save(); x.translate(p.px,p.py); x.rotate(p.r);
+      x.fillStyle=p.col; x.fillRect(-p.w/2,-p.h/2,p.w,p.h); x.restore();
+    });
+    if(alive) f=requestAnimationFrame(draw);
+  })();
+  setTimeout(()=>{ cancelAnimationFrame(f); x.clearRect(0,0,c.width,c.height); },3000);
+}
+
+// ── ОТКРЫТЬ / ЗАКРЫТЬ ─────────────────────────────────────
+function openCase() {
+  const idx   = roll();
+  const prize = PRIZES[idx];
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('reelScr').classList.remove('gone');
+  document.getElementById('resScr').classList.remove('show');
+  spin(idx, () => {
+    document.getElementById('reelScr').classList.add('gone');
+    document.getElementById('resScr').classList.add('show');
+    const blob = document.getElementById('resBlob');
+    blob.style.background = prize.color;
+    blob.textContent = prize.emoji;
+    blob.style.boxShadow = `0 0 55px ${prize.color}90`;
+    document.getElementById('resBadge').textContent = prize.rarity;
+    document.getElementById('resTitle').textContent = prize.stars===2 ? '💎 РЕДКИЙ!' : '✅ ВЫИГРЫШ!';
+    document.getElementById('resName').textContent  = prize.name;
+    document.getElementById('resName').style.color  = prize.color;
+    document.getElementById('resStars').textContent = `+${prize.stars} ⭐`;
+    confetti(prize.color);
+    st.balance+=prize.stars; st.opened+=1; st.total+=prize.stars;
+    if(!st.best||prize.stars>st.best.stars) st.best=prize;
+    st.hist.push({...prize,time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+    if(st.hist.length>50) st.hist=st.hist.slice(-50);
+    save(); renderUI();
+  });
+}
+function closeModal() { document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('overlay').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+// ── ЗВЁЗДЫ ───────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('starfield'), x=c.getContext('2d');
+  function resize(){c.width=innerWidth;c.height=innerHeight;}
+  resize(); window.addEventListener('resize',resize);
+  const S=Array.from({length:100},()=>({px:Math.random()*innerWidth,py:Math.random()*innerHeight,r:Math.random()*1.1+.2,sp:Math.random()*4+2,d:Math.random()*5}));
+  let t=0;
+  (function draw(){
+    x.clearRect(0,0,c.width,c.height); t+=.016;
+    S.forEach(s=>{ x.globalAlpha=(Math.sin((t+s.d)*2*Math.PI/s.sp)+1)/2*.6; x.fillStyle='#fff'; x.beginPath(); x.arc(s.px,s.py,s.r,0,Math.PI*2); x.fill(); });
+    x.globalAlpha=1; requestAnimationFrame(draw);
+  })();
+})();
+
+renderUI();
+</script>
+</body>
+</html>
